@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react'
-import { Bus, MapPin, Armchair, Clock, CloudSun, Signpost, TreePine, Users, FileText, Send } from 'lucide-react'
+import { Bus, MapPin, Armchair, Clock, CloudSun, Signpost, TreePine, Users, FileText, Send, Link2 } from 'lucide-react'
 import { useSceneStore } from '@/store/useSceneStore'
 import { getWeatherIcon, getTreeIcon, getPedestrianIcon, formatTimestamp } from '@/utils/sceneHelpers'
-import type { SceneFormData, Weather, TreeDensity, PedestrianStatus, SeatDirection } from '@/types'
+import type { SceneFormData, Weather, TreeDensity, PedestrianStatus, SeatDirection, ChainEvent } from '@/types'
 
 const WEATHERS: Weather[] = ['晴', '多云', '阴', '小雨', '大雨', '雪', '雾']
 const TREES: TreeDensity[] = ['稀疏', '适中', '茂密']
 const PEDESTRIANS: PedestrianStatus[] = ['稀少', '零星', '密集']
+
+const CHAIN_EVENT_TEXT: Record<ChainEvent['type'], string> = {
+  created: '发现同招牌记录，已生成待定稿接驳链',
+  joined: '已接入既有换乘接驳链',
+  restored: '定稿接驳链已恢复接续',
+}
 
 const initialForm: SceneFormData = {
   routeName: '',
@@ -25,6 +31,7 @@ export default function RecordPage() {
   const [form, setForm] = useState<SceneFormData>(initialForm)
   const [now, setNow] = useState(new Date())
   const [showSuccess, setShowSuccess] = useState(false)
+  const [chainEvent, setChainEvent] = useState<ChainEvent | null>(null)
 
   useEffect(() => { loadAll() }, [loadAll])
 
@@ -38,10 +45,12 @@ export default function RecordPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    saveScene(form)
+    const event = saveScene(form)
+    setChainEvent(event)
     setShowSuccess(true)
     setTimeout(() => {
       setShowSuccess(false)
+      setChainEvent(null)
       setForm(initialForm)
     }, 1500)
   }
@@ -53,6 +62,12 @@ export default function RecordPage() {
           <div className="animate-bounce flex flex-col items-center gap-2 opacity-0" style={{ animation: 'fadeInUp 1.5s ease forwards' }}>
             <Bus className="w-16 h-16 text-dusk-400" />
             <span className="text-mist-100 font-serif text-lg">记录已保存</span>
+            {chainEvent && (
+              <span className="flex items-center gap-1.5 text-dusk-300 font-serif text-sm">
+                <Link2 className="w-3.5 h-3.5" />
+                {CHAIN_EVENT_TEXT[chainEvent.type]}
+              </span>
+            )}
           </div>
           <style>{`@keyframes fadeInUp { 0% { opacity:0; transform:translateY(20px) } 40% { opacity:1; transform:translateY(0) } 100% { opacity:0; transform:translateY(-40px) } }`}</style>
         </div>

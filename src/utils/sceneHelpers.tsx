@@ -1,4 +1,4 @@
-import type { Weather, TreeDensity, PedestrianStatus } from '@/types'
+import type { Weather, TreeDensity, PedestrianStatus, ChainStatus, TransferChain, WindowScene } from '@/types'
 import {
   Sun, Cloud, CloudRain, CloudDrizzle, CloudSnow, CloudFog,
   TreePine, TreePine as TreeSparse, Trees,
@@ -71,3 +71,36 @@ export const WRITING_PROMPTS = [
   '用天气和行人密度写一段氛围描写',
   '把窗景当作一幅画，为它写一段策展词',
 ]
+
+export const CHAIN_STATUS_LABEL: Record<ChainStatus, string> = {
+  draft: '待定稿',
+  finalized: '已定稿',
+  pending: '待重连',
+}
+
+/** 两条记录相隔的分钟数（取整），用于展示接续间隔 */
+export function formatGapMinutes(fromIso: string, toIso: string): string {
+  const minutes = Math.round(
+    Math.abs(new Date(toIso).getTime() - new Date(fromIso).getTime()) / 60_000
+  )
+  return `${minutes} 分钟`
+}
+
+/** 接驳链涉及的不同线路数 */
+export function countChainRoutes(scenes: WindowScene[]): number {
+  return new Set(scenes.map((s) => s.routeName.trim())).size
+}
+
+/** 为已定稿接驳链生成写作角度提示 */
+export function buildChainPrompts(chain: TransferChain, scenes: WindowScene[]): string[] {
+  const first = scenes[0]
+  const last = scenes[scenes.length - 1]
+  const routes = countChainRoutes(scenes)
+  const spanMinutes = formatGapMinutes(first.timestamp, last.timestamp)
+  return [
+    `以招牌「${chain.signText}」为接头暗号，写一段从${first.routeName}到${last.routeName}的换乘`,
+    `把这条跨 ${routes} 条线路、历时 ${spanMinutes} 的接驳链，写成一次城市漂流`,
+    `在${first.routeName}与${last.routeName}之间，让「${chain.signText}」成为两个人错过的信号`,
+    `用 ${scenes.length} 段窗景的接力，写一篇关于"抵达之前"的散文`,
+  ]
+}
