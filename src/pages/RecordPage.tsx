@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Bus, MapPin, Armchair, Clock, CloudSun, Signpost, TreePine, Users, FileText, Send } from 'lucide-react'
 import { useSceneStore } from '@/store/useSceneStore'
-import { getWeatherIcon, getTreeIcon, getPedestrianIcon, formatTimestamp } from '@/utils/sceneHelpers'
-import type { SceneFormData, Weather, TreeDensity, PedestrianStatus, SeatDirection } from '@/types'
-
-const WEATHERS: Weather[] = ['晴', '多云', '阴', '小雨', '大雨', '雪', '雾']
-const TREES: TreeDensity[] = ['稀疏', '适中', '茂密']
-const PEDESTRIANS: PedestrianStatus[] = ['稀少', '零星', '密集']
+import { getWeatherIcon, getTreeIcon, getPedestrianIcon, formatTimestamp, WEATHERS, TREES, PEDESTRIANS } from '@/utils/sceneHelpers'
+import type { SceneFormData, SeatDirection } from '@/types'
 
 const initialForm: SceneFormData = {
   routeName: '',
@@ -25,6 +21,7 @@ export default function RecordPage() {
   const [form, setForm] = useState<SceneFormData>(initialForm)
   const [now, setNow] = useState(new Date())
   const [showSuccess, setShowSuccess] = useState(false)
+  const [healedNotice, setHealedNotice] = useState(false)
 
   useEffect(() => { loadAll() }, [loadAll])
 
@@ -38,21 +35,26 @@ export default function RecordPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    saveScene(form)
+    const { healed } = saveScene(form)
+    setHealedNotice(healed)
     setShowSuccess(true)
     setTimeout(() => {
       setShowSuccess(false)
+      setHealedNotice(false)
       setForm(initialForm)
-    }, 1500)
+    }, 1800)
   }
 
   return (
     <div className="relative min-h-screen bg-teal-950 p-4 pb-24">
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="animate-bounce flex flex-col items-center gap-2 opacity-0" style={{ animation: 'fadeInUp 1.5s ease forwards' }}>
+          <div className="animate-bounce flex flex-col items-center gap-2 opacity-0" style={{ animation: 'fadeInUp 1.8s ease forwards' }}>
             <Bus className="w-16 h-16 text-dusk-400" />
             <span className="text-mist-100 font-serif text-lg">记录已保存</span>
+            {healedNotice && (
+              <span className="text-dusk-300 font-serif text-xs">已补接一条待重连的接驳链</span>
+            )}
           </div>
           <style>{`@keyframes fadeInUp { 0% { opacity:0; transform:translateY(20px) } 40% { opacity:1; transform:translateY(0) } 100% { opacity:0; transform:translateY(-40px) } }`}</style>
         </div>

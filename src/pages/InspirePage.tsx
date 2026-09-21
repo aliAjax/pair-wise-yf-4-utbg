@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useSceneStore } from '@/store/useSceneStore'
 import {
   WRITING_PROMPTS,
@@ -8,10 +8,11 @@ import {
   formatTimestamp,
   getTimeOfDay,
 } from '@/utils/sceneHelpers'
+import { brokenMemberIds } from '@/utils/transferChains'
 import { Lightbulb, RefreshCw, Quote, Bus, ArrowRight } from 'lucide-react'
 
 export default function InspirePage() {
-  const { randomScene, refreshRandom, loadAll, scenes } = useSceneStore()
+  const { randomScene, refreshRandom, loadAll, scenes, chains } = useSceneStore()
   const [revealed, setRevealed] = useState(false)
   const [displayedPrompt, setDisplayedPrompt] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -20,6 +21,14 @@ export default function InspirePage() {
   useEffect(() => {
     loadAll()
   }, [loadAll])
+
+  // 待重连定稿链中的记录不参与灵感抽取
+  const eligibleCount = useMemo(() => {
+    const excluded = brokenMemberIds(chains)
+    return scenes.filter((s) => !excluded.has(s.id)).length
+  }, [scenes, chains])
+
+  const excludedCount = scenes.length - eligibleCount
 
   useEffect(() => {
     if (!revealed || !randomScene) return
@@ -63,6 +72,19 @@ export default function InspirePage() {
         <Bus className="w-16 h-16 text-dusk-400/40 mb-6" />
         <p className="text-mist-100 text-lg font-serif mb-2">还没有窗景记录</p>
         <p className="text-mist-400 text-sm">先去记录一段窗景，才能在这里采集灵感</p>
+      </div>
+    )
+  }
+
+  if (eligibleCount === 0) {
+    return (
+      <div className="min-h-screen bg-teal-950 flex flex-col items-center justify-center px-6 text-center">
+        <Bus className="w-16 h-16 text-amber-400/40 mb-6" />
+        <p className="text-mist-100 text-lg font-serif mb-2">暂无可抽取的窗景</p>
+        <p className="text-mist-400 text-sm max-w-sm leading-relaxed">
+          现有 {scenes.length} 条记录全部属于待重连的接驳链（{excludedCount} 条）。
+          补入共享同一块招牌、十五分钟内可接续的新记录，让链恢复后即可重新采集灵感。
+        </p>
       </div>
     )
   }

@@ -29,3 +29,21 @@ export interface SceneFormData {
   pedestrianStatus: PedestrianStatus
   note: string
 }
+
+/** 接驳链状态：active=已定稿且接续完整；broken=定稿链中间记录缺失，待重连 */
+export type ChainStatus = 'active' | 'broken'
+
+export interface TransferChain {
+  id: string
+  /** 成员记录 id，按时间从早到晚排列 */
+  memberIds: string[]
+  status: ChainStatus
+  /**
+   * 断裂相邻位置：每个数字 i 表示 memberIds[i-1] → memberIds[i]
+   * 之间缺失了中间记录（删除事件驱动，即使前后项仍满足规则也算断裂）。
+   * status === 'broken' 时非空；恢复后清空。
+   */
+  gaps: number[]
+  createdAt: string
+  finalizedAt: string
+}

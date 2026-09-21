@@ -5,6 +5,10 @@ import {
   PersonStanding, Users,
 } from 'lucide-react'
 
+export const WEATHERS: Weather[] = ['晴', '多云', '阴', '小雨', '大雨', '雪', '雾']
+export const TREES: TreeDensity[] = ['稀疏', '适中', '茂密']
+export const PEDESTRIANS: PedestrianStatus[] = ['稀少', '零星', '密集']
+
 export function getWeatherIcon(weather: Weather) {
   const map: Record<Weather, React.ReactNode> = {
     '晴': <Sun className="w-4 h-4 text-dusk-400" />,
